@@ -1,4 +1,4 @@
-﻿using LogisticsAPI.DatabaseContext;
+using LogisticsAPI.DatabaseContext;
 using LogisticsAPI.Models;
 using LogisticsAPI.Response;
 using Microsoft.AspNetCore.Http;
@@ -48,6 +48,15 @@ namespace LogisticsAPI.Controllers
             var token = new JwtSecurityTokenHandler().WriteToken(Sectoken);
             return token;
         }
+        private string EncryptString(string password)
+        {
+            string encryptedPass = "";
+            byte[] encode = new byte[password.Length];
+            encode = Encoding.UTF8.GetBytes(password);
+            encryptedPass = Convert.ToBase64String(encode);
+            return encryptedPass;
+        }
+
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(Login login)
@@ -58,14 +67,22 @@ namespace LogisticsAPI.Controllers
                 {
                     return BadRequest(new DataResponse<object>(null, "Email or password is empty", HttpStatusCode.BadRequest));
                 }
-                var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == login.Email && x.Password == login.Password);
+                var encPass = EncryptString(login.Password);
+                var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == login.Email && x.Password == encPass);
                 if(user!=null)
                 {
                     var token = GenerateJwtToken();
                     user.Status = "Active";
                     _context.Update(user);
                     await _context.SaveChangesAsync();
-                    return Ok(new DataResponse<string>(token, "Login successful", HttpStatusCode.OK));
+                    var obj = new
+                    {
+                        token = token,
+                        userType = user.RoleId,
+                        userId = user.Id,
+                        username = user.FirstName + " " + user.LastName
+                    };
+                    return Ok(new DataResponse<object>(obj, "Login successful", HttpStatusCode.OK));
 
                 }
                 return BadRequest(new DataResponse<object>(null, "Wrong password", HttpStatusCode.BadRequest));
@@ -87,6 +104,7 @@ namespace LogisticsAPI.Controllers
                 {
                     user.UpdatedAt = DateTime.Now;
                     user.Status = "Inactive";
+                    user.Password=EncryptString(user.Password);
                     var res = await _context.AddAsync(user);
                     await _context.SaveChangesAsync();
                     return Ok(new DataResponse<User>(user, "user created", HttpStatusCode.OK));
@@ -100,5 +118,7 @@ namespace LogisticsAPI.Controllers
                 return BadRequest(new DataResponse<object>(null, ex.Message, HttpStatusCode.BadRequest));
             }
         }
+        
+        
     }
 }
