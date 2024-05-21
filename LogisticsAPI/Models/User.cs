@@ -1,4 +1,4 @@
-﻿namespace LogisticsAPI.Models
+namespace LogisticsAPI.Models
 {
     public class User
     {
@@ -12,6 +12,6 @@
         public string? Status { get; set; }
         public string? ShiftDetail { get; set; }
         public DateTime? UpdatedAt { get; set; }
-
+        public List<JobDetails>? Jobs { get; set; }
     }
 }
