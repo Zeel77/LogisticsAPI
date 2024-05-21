@@ -1,4 +1,4 @@
-﻿using LogisticsAPI.DatabaseContext;
+using LogisticsAPI.DatabaseContext;
 using LogisticsAPI.Models;
 using LogisticsAPI.Response;
 using Microsoft.AspNetCore.Authorization;
